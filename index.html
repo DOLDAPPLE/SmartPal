@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI学习助手</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin:0; padding:0; }
+body,html { height:100%; font-family:'Inter',sans-serif; background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); color:#fff; overflow-x:hidden; }
+header {
+  position: fixed; top:0; left:0; width:100%; height:60px;
+  display:flex; align-items:center; justify-content:flex-start;
+  padding:0 40px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+header h1 { font-weight:600; font-size:1.5em; cursor:pointer; margin-right:40px; transition:0.3s; }
+header h1:hover { transform: scale(1.05); }
+
+.nav-text {
+  margin-right: 30px;
+  padding: 8px 12px;
+  font-weight:600;
+  cursor:pointer;
+  border-radius:8px;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.3s;
+}
+.nav-text:hover { background: rgba(255,255,255,0.25); }
+
+.dropdown-card {
+  position: absolute;
+  top: -180px;
+  width: 180px;
+  height: 120px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(15px);
+  border-radius:16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition: top 0.5s cubic-bezier(0.25, 1.25, 0.5, 1.2);
+}
+.dropdown-card img { width:50px; height:50px; margin-bottom:10px; }
+.dropdown-card span { font-weight:900; font-size:16px; }
+.dropdown-card:hover { background: rgba(255,255,255,0.15); transform: translateY(-5px) scale(1.05); }
+
+#card1 { left:100px; }
+#card2 { left:230px; }
+
+main {
+  padding-top:100px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100vh;
+}
+.main-image {
+  width:80%;
+  max-width:900px;
+  border-radius:16px;
+  box-shadow:0 0 30px rgba(0,0,0,0.4);
+  transition: transform 0.3s;
+}
+.main-image:hover { transform: scale(1.02); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AI学习助手</h1>
+  <div class="nav-text" id="text1">学习计划</div>
+  <div class="nav-text" id="text2">试卷分析</div>
+  
+  <div class="dropdown-card" id="card1" onclick="location.href='study_plan.html'">
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/book.png" alt="学习计划">
+    <span>学习计划</span>
+  </div>
+  <div class="dropdown-card" id="card2" onclick="location.href='exam_analysis.html'">
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/test-tube.png" alt="试卷分析">
+    <span>试卷分析</span>
+  </div>
+</header>
+
+<main>
+  <img class="main-image" src="main_image.png" alt="主背景">
+</main>
+
+<script>
+const text1 = document.getElementById('text1');
+const text2 = document.getElementById('text2');
+const card1 = document.getElementById('card1');
+const card2 = document.getElementById('card2');
+
+function setupHover(trigger, card) {
+  let hoverState = false;
+
+  function show() { card.style.top = '60px'; hoverState = true; }
+  function hide() { card.style.top = '-180px'; hoverState = false; }
+
+  // 鼠标移入文字
+  trigger.addEventListener('mouseenter', show);
+  trigger.addEventListener('mouseleave', ()=>{ setTimeout(()=>{ if(!hoverState) hide(); },100); });
+
+  // 鼠标移入卡片
+  card.addEventListener('mouseenter', ()=>{ hoverState = true; });
+  card.addEventListener('mouseleave', ()=>{ setTimeout(()=>{ if(!trigger.matches(':hover')) hide(); },100); });
+}
+
+setupHover(text1, card1);
+setupHover(text2, card2);
+</script>
+
+</body>
+</html>

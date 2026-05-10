@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI学习助手 - 试卷分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body,html { height:100%; font-family:'Inter',sans-serif; background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); color:#fff; }
+header {
+  position:fixed; top:0; left:0; width:100%; height:60px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 40px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); z-index:10;
+}
+header h1 { font-weight:600; font-size:1.5em; cursor:pointer; }
+header a { color:#fff; font-weight:bold; text-decoration:none; padding:8px 12px; background:rgba(0,0,0,0.2); border-radius:8px; }
+main { padding-top:80px; display:flex; justify-content:center; min-height:100vh; }
+.container { width:90%; max-width:900px; background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border-radius:20px; padding:30px; box-shadow:0 16px 32px rgba(0,0,0,0.3); text-align:center; }
+#dropArea {
+  border:2px dashed rgba(255,255,255,0.4); border-radius:16px; padding:40px; margin-bottom:20px; transition:0.3s;
+  color:#fff; font-size:1.1em; cursor:pointer;
+}
+#dropArea.hover { border-color:#00ffcc; background: rgba(255,255,255,0.05); }
+textarea { width:100%; height:400px; border-radius:12px; border:none; padding:12px; background: rgba(255,255,255,0.3); backdrop-filter: blur(8px); color:#000; font-size:16px; resize:none; }
+button { margin-top:15px; padding:12px 20px; font-size:1em; border:none; border-radius:12px; cursor:pointer; background:#00fff7; color:#000; font-weight:bold; }
+#loading { display:none; font-weight:bold; color:#0ff; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AI学习助手 - 试卷分析</h1>
+  <a href="index.html">返回主菜单</a>
+</header>
+
+<main>
+  <div class="container">
+    <div id="dropArea">拖拽 TXT 文件到这里，或者点击选择</div>
+    <input type="file" id="fileInput" style="display:none;" accept=".txt"/>
+    <div id="loading">AI分析中，请稍等...</div>
+    <textarea id="analysisOutput" placeholder="分析结果将显示在这里..." readonly></textarea>
+  </div>
+</main>
+
+<script>
+// 拖拽和点击上传
+const dropArea = document.getElementById('dropArea');
+const fileInput = document.getElementById('fileInput');
+const analysisOutput = document.getElementById('analysisOutput');
+const loading = document.getElementById('loading');
+
+dropArea.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', ()=> handleFiles(fileInput.files));
+
+dropArea.addEventListener('dragover', (e)=>{
+  e.preventDefault();
+  dropArea.classList.add('hover');
+});
+dropArea.addEventListener('dragleave', ()=> dropArea.classList.remove('hover'));
+dropArea.addEventListener('drop', (e)=>{
+  e.preventDefault();
+  dropArea.classList.remove('hover');
+  handleFiles(e.dataTransfer.files);
+});
+
+async function handleFiles(files){
+  if(files.length === 0) return;
+  const file = files[0];
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    const content = e.target.result;
+    analysisOutput.value = "";
+    loading.style.display = 'block';
+    
+    // 构建 prompt 给 AI
+    const prompt = `你是一位AI学习分析师。
+根据以下试卷内容，分析每道题的正确答案和学生作答。
+请输出：
+1) 题号
+2) 错误类型（如果答对就写“正确”）
+3) 薄弱知识点
+4) 改进建议
+试卷内容：
+${content}`;
+    
+    const analysis = await callOllamaAPI(prompt);
+    await typeWriter(analysisOutput, analysis, 10);
+    loading.style.display = 'none';
+  };
+  reader.readAsText(file);
+}
+
+// 调用本地 Ollama / 千问 API
+async function callOllamaAPI(promptText){
+  try{
+    const resp = await fetch('http://127.0.0.1:5500/generate', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt: promptText })
+    });
+    const data = await resp.json();
+    return data.text || 'AI未返回内容';
+  }catch(err){
+    console.error(err);
+    return '调用失败，请检查本地AI服务';
+  }
+}
+
+// 打字机滚动显示
+async function typeWriter(target, text, speed=20){
+  target.value = '';
+  for(let i=0;i<text.length;i++){
+    target.value += text[i];
+    target.scrollTop = target.scrollHeight;
+    await new Promise(res=>setTimeout(res,speed));
+  }
+}
+</script>
+
+</body>
+</html>

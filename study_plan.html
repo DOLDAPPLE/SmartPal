@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI学习助手 - 学习计划</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body,html { height:100%; font-family:'Inter',sans-serif; background: linear-gradient(135deg,#0f2027,#203a43,#2c5364); color:#fff; overflow-x:hidden; padding-top:80px; }
+header {
+  position:fixed; top:0; left:0; width:100%; height:60px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 40px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); z-index:10;
+}
+header h1 { font-weight:600; font-size:1.5em; cursor:pointer; }
+header a { color:#fff; font-weight:bold; text-decoration:none; padding:8px 12px; background:rgba(0,0,0,0.2); border-radius:8px; }
+
+main { display:flex; justify-content:center; min-height:100vh; }
+.container { max-width:800px; margin:0 auto; background:rgba(255,255,255,0.1); border-radius:16px; padding:30px; backdrop-filter:blur(10px); }
+h2 { text-align:center; margin-bottom:30px; color:#0ff; letter-spacing:1px; }
+label { display:block; margin-top:15px; margin-bottom:5px; }
+
+/* 所有输入框样式 */
+input, button, textarea {
+  width:100%; padding:12px; margin-bottom:12px; border-radius:12px; border:none; font-size:1em; background: rgba(255,255,255,0.05); color:#fff;
+}
+/* 科目选择框单独样式，纯背景色，白字 */
+select#subjectSelect {
+  width:100%; padding:12px; margin-bottom:12px; border-radius:12px; border:none; font-size:1em; background:#1a73e8; color:#fff;
+}
+
+button { background:#00fff7; color:#000; font-weight:bold; cursor:pointer; transition:0.3s; }
+button:hover { background:#00c8c3; }
+
+textarea { height:400px; resize:none; font-family:Consolas,monospace; line-height:1.5; }
+#loading { display:none; font-weight:bold; color:#0ff; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AI学习助手</h1>
+  <a href="index.html">返回主菜单</a>
+</header>
+
+<div class="container">
+  <h2>AI 学习助手</h2>
+  <div style="text-align:center;"><h1>学习计划生成</h1></div>
+
+  <label>选择科目</label>
+  <select id="subjectSelect">
+    <option>化学</option>
+    <option>数学</option>
+    <option>物理</option>
+    <option>英语</option>
+    <option>生物</option>
+  </select>
+
+  <label>当前分数</label>
+  <input type="number" id="currentScore" placeholder="请输入当前分数">
+
+  <label>目标分数</label>
+  <input type="number" id="targetScore" placeholder="请输入目标分数">
+
+  <label>计划天数</label>
+  <input type="number" id="days" value="30">
+
+  <button id="generateBtn">生成计划</button>
+  <div id="loading">AI生成中...</div>
+
+  <label>AI生成的学习计划</label>
+  <textarea id="aiOutput" readonly></textarea>
+</div>
+
+<script>
+// 调用本地 Ollama 桥接服务
+async function callOllamaAPI(promptText){
+  try{
+    const resp = await fetch('http://localhost:5500/generate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt:promptText})
+    });
+    const data = await resp.json();
+    return data.text || 'AI没有生成内容';
+  }catch(err){
+    console.error(err);
+    return '调用失败，请检查本地桥接服务';
+  }
+}
+
+// 打字机滚动显示
+async function typeWriter(targetElement, text, speed=20){
+  targetElement.value = '';
+  for(let i=0;i<text.length;i++){
+    targetElement.value += text[i];
+    targetElement.scrollTop = targetElement.scrollHeight;
+    await new Promise(res=>setTimeout(res,speed));
+  }
+}
+
+document.getElementById('generateBtn').addEventListener('click', async ()=>{
+  const subject = document.getElementById('subjectSelect').value;
+  const current = document.getElementById('currentScore').value;
+  const target = document.getElementById('targetScore').value;
+  const days = document.getElementById('days').value;
+  const aiOutput = document.getElementById('aiOutput');
+  const loading = document.getElementById('loading');
+
+  if(!current || !target || !days){ alert('请输入完整信息'); return; }
+
+  aiOutput.value = '';
+  loading.style.display = 'block';
+
+  const summaryPrompt = `你是一位AI学习规划师。用户${subject}当前分数${current}，目标分数${target}。请先总结这${days}天的核心学习策略。`;
+  const summary = await callOllamaAPI(summaryPrompt);
+
+  const taskPrompt = `根据以下总结生成每天具体可执行的任务：
+总结：
+${summary}
+请生成${days}天的每日任务，每天格式：
+第X天：早上...，中午...，晚上...`;
+
+  const tasksText = await callOllamaAPI(taskPrompt);
+
+  const finalText = `=== 学习总结 ===\n${summary}\n\n=== 每日任务 ===\n${tasksText}`;
+  await typeWriter(aiOutput, finalText, 10);
+  loading.style.display = 'none';
+});
+</script>
+
+</body>
+</html>
