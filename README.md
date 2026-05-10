@@ -4,6 +4,7 @@
 学校：北京市顺义区第一中学
 
 *由于本项目使用的是本地部署的Qwen大模型，所以运行需预先下载ollama然后在ollama里面下载qwen2.5:3b模型
+*需要提前下载npm库
 
 
 ## 作品简介
@@ -63,8 +64,9 @@
 1. 安装 Ollama
 2. 拉取模型：ollama pull qwen2.5:3b
 3. 终端打开源代码文件所在文件夹
-4. 在终端运行桥接服务：node server.js
-5. 浏览器打开 index.html 即可使用
+4. 在终端运行npm install
+5. 在终端运行桥接服务：node server.js
+6. 浏览器打开 index.html 即可使用
 
 ---
 
